@@ -15,6 +15,7 @@ export class StatService {
 
   public async getOverlayPlayerInfo(playerId: number): Promise<object> {
     const player = await this.playersService.getPlayerById(playerId)
+    let playerTopHeroes = []
 
     const [team, patchWinLose, days7WinLose, days1WinLose, playerHeroes] = await Promise.all([
       this.teamsService.getTeamById(player.team_id),
@@ -25,21 +26,25 @@ export class StatService {
     ])
 
     // sort and get top 3 heroes
-    playerHeroes.sort((a, b) => b.games * getWinrate(b.win, b.games - b.win) - a.games * getWinrate(a.win, a.games - a.win))
-    playerHeroes.splice(3)
+    if (playerHeroes) {
+      playerHeroes.sort((a, b) => b.games * getWinrate(b.win, b.games - b.win) - a.games * getWinrate(a.win, a.games - a.win))
+      playerHeroes.splice(3)
 
-    const playerTopHeroes = await Promise.all(
-      playerHeroes.map(async h => {
-        const hero = await this.heroesService.getHeroById(Number(h.hero_id))
-        return {
-          hero_id: hero.id,
-          hero_name: hero.localized_name,
-          hero_img: hero.img,
-          winrate: getWinrate(h.win, h.games - h.win),
-        }
-      })
-    )
+      playerTopHeroes = await Promise.all(
+        playerHeroes.map(async h => {
+          const hero = await this.heroesService.getHeroById(Number(h.hero_id))
+          return {
+            hero_id: hero.id,
+            hero_name: hero.localized_name,
+            hero_img: hero.img,
+            winrate: getWinrate(h.win, h.games - h.win),
+            games: h.games,
+          }
+        })
+      )  
+    }
 
+    
     return {
       player_id: player.account_id,
       player_nickname: player.name,

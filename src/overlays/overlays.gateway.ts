@@ -8,8 +8,18 @@ import { Server } from 'socket.io'
 
 // lol. yes, that simple. no need to make it more complex
 const OVERLAYS_STATE = {
-  DEFAULT: 0,
-  HERO_STAT: 0,
+  DEFAULT: {
+    active: 0,
+    options: {}
+  },
+  HERO_STAT: {
+    active: 0,
+    options: {}
+  },
+  PLAYER_STAT: {
+    active: 0,
+    options: {}
+  },
 }
 
 @WebSocketGateway(5000, { cors: true })
@@ -24,7 +34,10 @@ export class OverlaysGateway {
 
   @SubscribeMessage('set_overlays_state')
   async setOverlaysState(@MessageBody() data: SetOverlayState): Promise<object> {
-    OVERLAYS_STATE[data.key] = data.value;
+    if (OVERLAYS_STATE[data.key]) {
+      OVERLAYS_STATE[data.key].active = data.value;
+      OVERLAYS_STATE[data.key].options = data.options;
+    }
 
     return {
       success: true

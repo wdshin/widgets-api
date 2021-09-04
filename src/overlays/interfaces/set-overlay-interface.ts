@@ -1,4 +1,5 @@
 interface SetOverlayState {
   key: string,
-  value: Number
+  value: Number,
+  options: object
 }

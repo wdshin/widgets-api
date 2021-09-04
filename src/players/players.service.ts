@@ -12,6 +12,7 @@ export class PlayersService {
 
   async getPlayers(): Promise<Players[]> {
     const players = await this.playersModel.find();
+    players.sort((a, b) => a.team_id - b.team_id);
     return players;
   }
 

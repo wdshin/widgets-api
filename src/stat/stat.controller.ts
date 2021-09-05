@@ -36,4 +36,18 @@ export class StatController {
    ): Promise<object> {
      return this.statService.getTeamsConfrontation(Number(team1Id), Number(team2Id))
    }
+
+  /**
+   * Get correlation between match length
+   * and winrate for the team (in last year)
+   * 
+   * @param teamId
+   * @returns info object
+   */
+      @Get('/overlay/team/duration_winrate')
+      async getTeamDurationWinrateCorrelation(
+        @Query('teamId') teamId: string,
+      ): Promise<object> {
+        return this.statService.getTeamWinrateMatchDuration(Number(teamId))
+      }
 }

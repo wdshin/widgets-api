@@ -103,4 +103,42 @@ export class StatService {
       team1_winrate_last_year: getWinrate(winLastYear.length, matchesAgainstLastYear.length - winLastYear.length),
     }
   }
+
+  public async getTeamWinrateMatchDuration(teamId: number): Promise<object> {
+    const [
+      teamMatches,
+      teamInfo,
+    ] = await Promise.all([
+      OpendotaService.getTeamMatches(teamId),
+      this.teamsService.getTeamById(teamId),
+    ])
+
+    const lastYear = new Date(Date.now() - 1000 * 60 * 60 * 24 * 365)
+    const _40min = 40 * 60, longer = [], shorter = []
+
+    for (let i = 0; i < teamMatches.length; ++i) {
+      const match = teamMatches[i]
+
+      if (new Date(match.start_time * 1000) < lastYear) continue
+
+      if (match.duration > _40min) {
+        longer.push(match)
+      } else {
+        shorter.push(match)
+      }
+    }
+
+    const winShorter = shorter.filter(match => match.radiant === match.radiant_win)
+    const winLonger = longer.filter(match => match.radiant === match.radiant_win)
+
+    return {
+      team_id: teamInfo.team_id,
+      team_logo: teamInfo.logo_url,
+      team_name: teamInfo.name,
+      games_longer: longer.length,
+      games_shorter: shorter.length,
+      winrate_longer: getWinrate(winLonger.length, longer.length - winLonger.length),
+      winrate_shorter: getWinrate(winShorter.length, shorter.length - winShorter.length)
+    }
+  }
 }

@@ -70,4 +70,37 @@ export class StatService {
       ],
     }
   }
+
+  public async getTeamsConfrontation(team1Id: number, team2Id: number): Promise<object> {
+    const [
+      team1Matches,
+      team1,
+      team2,
+    ] = await Promise.all([
+      OpendotaService.getTeamMatches(team1Id),
+      this.teamsService.getTeamById(team1Id),
+      this.teamsService.getTeamById(team2Id),
+    ])
+
+    const lastYear = new Date(Date.now() - 1000 * 60 * 60 * 24 * 365)
+
+    const matchesAgainst = team1Matches.filter(match => match.opposing_team_id === team2Id)
+    const matchesAgainstLastYear = matchesAgainst.filter(match => new Date(match.start_time * 1000) > lastYear)
+
+    const winTotal = matchesAgainst.filter(match => match.radiant === match.radiant_win)
+    const winLastYear = matchesAgainstLastYear.filter(match => match.radiant === match.radiant_win)
+
+    return {
+      team1_id: team1.team_id,
+      team1_logo: team1.logo_url,
+      team1_name: team1.name,
+      team2_id: team2.team_id,
+      team2_logo: team2.logo_url,
+      team2_name: team2.name,
+      matches_against_total: matchesAgainst.length,
+      matches_against_last_year: matchesAgainstLastYear.length,
+      team1_winrate_total: getWinrate(winTotal.length, matchesAgainst.length - winTotal.length),
+      team1_winrate_last_year: getWinrate(winLastYear.length, matchesAgainstLastYear.length - winLastYear.length),
+    }
+  }
 }

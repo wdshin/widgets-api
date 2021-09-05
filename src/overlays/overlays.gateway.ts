@@ -20,6 +20,10 @@ const OVERLAYS_STATE = {
     active: 0,
     options: {}
   },
+  BETTING_ODDS: {
+    active: 0,
+    options: {}
+  }
 }
 
 @WebSocketGateway(5000, { cors: true })

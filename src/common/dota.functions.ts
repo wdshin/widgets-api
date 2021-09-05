@@ -1,1 +1,1 @@
-export const getWinrate = (win, lose) => (win / (win + lose)) * 100
+export const getWinrate = (win: number, lose: number) => (win / (win + lose)) * 100

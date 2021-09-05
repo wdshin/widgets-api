@@ -11,6 +11,7 @@ export default class OpendotaService {
     players: () => '/players',
     playersWinlose: (id, options) => `/players/${id}/wl?${QueryString.stringify(options)}`,
     playersHeroes: (id, options) => `/players/${id}/heroes?${QueryString.stringify(options)}`,
+    teamMatches: (id) => `/teams/${id}/matches`,
   }
 
   constructor() {}
@@ -59,5 +60,9 @@ export default class OpendotaService {
     }
 
     return OpendotaService.get(OpendotaService.endpoints.playersHeroes(playerId, options))
+  }
+
+  public static getTeamMatches = (teamId: number): Promise<Array<any>> => {
+    return OpendotaService.get(OpendotaService.endpoints.teamMatches(teamId))
   }
 }

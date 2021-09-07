@@ -44,10 +44,10 @@ export class StatController {
    * @param teamId
    * @returns info object
    */
-      @Get('/overlay/team/duration_winrate')
-      async getTeamDurationWinrateCorrelation(
-        @Query('teamId') teamId: string,
-      ): Promise<object> {
-        return this.statService.getTeamWinrateMatchDuration(Number(teamId))
-      }
+    @Get('/overlay/team/duration_winrate')
+    async getTeamDurationWinrateCorrelation(
+      @Query('teamId') teamId: string,
+    ): Promise<object> {
+      return this.statService.getTeamWinrateMatchDuration(Number(teamId))
+    }
 }

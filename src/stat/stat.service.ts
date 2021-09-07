@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common'
+import { LazyModuleLoader } from '@nestjs/core'
+import { match } from 'assert'
 import { getWinrate } from 'src/common/dota.functions'
 import OpendotaService from 'src/common/OpendotaService'
 import { HeroesService } from 'src/heroes/heroes.service'
@@ -13,6 +15,7 @@ export class StatService {
     private readonly heroesService: HeroesService,
   ) {}
 
+  
   public async getOverlayPlayerInfo(playerId: number): Promise<object> {
     const player = await this.playersService.getPlayerById(playerId)
     let playerTopHeroes = []
@@ -24,6 +27,9 @@ export class StatService {
       OpendotaService.getWinLose(playerId, 1),
       OpendotaService.getPlayerHeroes(playerId, null, OpendotaService.CURRENT_PATCH),
     ])
+
+    const stats = await this.getPlayerStats(playerId)
+    console.log(stats)
 
     // sort and get top 3 heroes
     if (playerHeroes) {
@@ -38,13 +44,12 @@ export class StatService {
             hero_name: hero.localized_name,
             hero_img: hero.img,
             winrate: getWinrate(h.win, h.games - h.win),
-            games: h.games,
+            games: h.games
           }
         })
       )  
     }
 
-    
     return {
       player_id: player.account_id,
       player_nickname: player.name,
@@ -69,6 +74,77 @@ export class StatService {
         },
       ],
     }
+  }
+
+  private async getPlayerStats(player_id: number) {
+    const playerMatches = await OpendotaService.getPlayerMatches(player_id, 7, OpendotaService.CURRENT_PATCH)
+    const rawMatches = await Promise.all(playerMatches.map((item) => OpendotaService.getMatch(item.match_id)))
+    const stats = rawMatches.map( (match) => {
+      const ally = match.players.filter((player) => player.account_id == player_id).pop()
+      const enemy = match.players.filter((player) => player.isRadiant == !ally.isRadiant && player.lane_role == ally.lane_role).pop()
+      return {
+        win: ally.win,
+        lose: ally.lose,
+        against: enemy.hero_id,
+        hero: ally.hero_id,
+        role: ally.lane_role,
+        efficiency: ally.lane_efficiency,
+        match_id: ally.match_id,
+        totals: {
+          level: ally.level,
+          gold:  ally.total_gold,
+          kills: ally.kills,
+          deaths: ally.deaths,
+          assists: ally.assists,
+          kda: ally.kda,
+          last_hits: ally.last_hits,
+          denies: ally.denies
+        },
+        items: [
+          ally.item_0,
+          ally.item_1,
+          ally.item_2,
+          ally.item_3,
+          ally.item_4,
+          ally.item_5
+        ],
+        neutral_item: ally.item_neutral,
+        per_minute: {
+          actions:  ally.actions_per_min,
+          gold: ally.gold_per_min,
+          xp: ally.xp_per_min,
+          kills: ally.kills_per_min
+        },
+        camps: {
+          stacked: ally.camps_stacked,
+          creeps: ally.creeps_stacked,
+          neutrals_killed: ally.neutral_kills,
+          ancient_kills: ally.ancient_kills
+        },
+        wards: {
+          observer: {
+            placed: ally.obs_placed,
+            used: ally.observer_uses,
+            killed: ally.observer_kills
+          },
+          sentry: {
+            placed: ally.sen_placed,
+            used: ally.sentry_uses,
+            killed: ally.sentry_kills
+          }
+        },
+        creeps: {
+          killed: ally.lane_kills,
+          denied: ally.denies
+        },
+        tower: {
+          damage: ally.tower_damage,
+          killed: ally.towers_killed,
+          kills: ally.tower_kills
+        }
+      }
+    })
+    return stats
   }
 
   public async getTeamsConfrontation(team1Id: number, team2Id: number): Promise<object> {

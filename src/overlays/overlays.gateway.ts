@@ -24,6 +24,10 @@ const OVERLAYS_STATE = {
     active: 0,
     options: {},
   },
+  ROSHAN_TIMING: {
+    active: 0,
+    options: {},
+  },
 }
 
 @WebSocketGateway({ cors: true })

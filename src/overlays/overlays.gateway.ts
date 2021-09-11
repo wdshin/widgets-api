@@ -26,7 +26,7 @@ const OVERLAYS_STATE = {
   }
 }
 
-@WebSocketGateway(5000, { cors: true })
+@WebSocketGateway(Number(process.env.PORT), { cors: true })
 export class OverlaysGateway {
   @WebSocketServer()
   server: Server

@@ -22,6 +22,9 @@ export class Players {
 
   @Prop({ default: "" })
   readonly img: string
+
+  @Prop({ default: "" })
+  readonly country_code: string
 }
 
 export const PlayersSchema = SchemaFactory.createForClass(Players)

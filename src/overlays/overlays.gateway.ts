@@ -22,11 +22,11 @@ const OVERLAYS_STATE = {
   },
   BETTING_ODDS: {
     active: 0,
-    options: {}
-  }
+    options: {},
+  },
 }
 
-@WebSocketGateway(Number(process.env.PORT), { cors: true })
+@WebSocketGateway({ cors: true })
 export class OverlaysGateway {
   @WebSocketServer()
   server: Server

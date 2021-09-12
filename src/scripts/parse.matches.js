@@ -25,18 +25,14 @@ async function getParsedStatsForLeague(league_id) {
     const league_matches_json = await fetch(league_matches_url).then((data) => data.json())
     const league_match_ids = league_matches_json.map((match) => match.match_id)
     
-    //TODO: Add a timeout
-    // const fetch_match_data = league_match_ids.map((id) => {
-    //     const match_by_id_url = opendotaMatchById(id)
-    //     return fetch(match_by_id_url)
-    // })
-    // const matches_data = await Promise.all(fetch_match_data)
-    // const stats = matches_data.map( (match) => parse_match_stats(match))
-
-    const match_id = league_match_ids[0]
-    const match = await get_match_data(match_id)
-    const stats = parse_match_stats(match)
-    return stats
+    for (let i = 0; i < league_match_ids.length; ++i) {
+        const match_id = league_match_ids[i]
+        const match = await get_match_data(match_id)
+        const stats = parse_match_stats(match)
+        console.log(stats.heroes.keys())
+        console.log()
+        await sleep(.5)
+    }
 }
 
 async function get_match_data(id) {

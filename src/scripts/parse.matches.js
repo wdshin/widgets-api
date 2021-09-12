@@ -61,34 +61,21 @@ function parse_match_stats(match) {
     const radiant_team = assign_team_and_position(players, true)
     const dire_team = assign_team_and_position(players, false)
 
-    const stats = new Map() 
+    const player_stats = new Map() 
+    const hero_stats = new Map()
     players.forEach((player) => {
-        const player_stats = make_player_stats(
-            player,
-            player.isRadiant ? radiant_team : dire_team,
-            player.isRadiant ? dire_team : radiant_team
-        )
-        stats.set(player.account_id, player_stats)
+        const stats = make_player_stats(player, player.isRadiant ? dire_team : radiant_team)
+        player_stats.set(player.account_id, stats)
+        hero_stats.set(player.hero_id, stats)
     })
     
-    return stats
-}
-
-function make_stat_matchup(player, enemy, property) {
     return {
-        me: player[property],
-        enemy: enemy[property]
+        players: player_stats,
+        heroes: hero_stats
     }
 }
 
-function make_stat_matchup(player, enemy, property) {
-    return {
-        me: player[property],
-        enemy: enemy[property]
-    }
-}
-
-function make_player_stats(player, ally_team, enemy_team) {
+function make_player_stats(player, enemy_team) {
     const enemy = enemy_team[player.position - 1]
     return {
         player_id: make_stat_matchup(player, enemy, "account_id"),
@@ -147,6 +134,13 @@ function make_player_stats(player, ally_team, enemy_team) {
             killed: make_stat_matchup(player, enemy, "towers_killed"),
             kills: make_stat_matchup(player, enemy, "tower_kills")
         }
+    }  
+}
+
+function make_stat_matchup(player, enemy, property) {
+    return {
+        me: player[property],
+        enemy: enemy[property]
     }
 }
 

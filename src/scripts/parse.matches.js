@@ -143,7 +143,6 @@ function make_stat_matchup(player, enemy, property) {
 main()
 
 /*
-- Add wait before sending the match details request
 - Sum up stats
 - Saving stats to db
 - Adding facts

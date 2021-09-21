@@ -25,6 +25,9 @@ export class Players {
 
   @Prop({ default: "" })
   readonly country_code: string
+
+  @Prop({ default: 5 })
+  readonly position: number
 }
 
 export const PlayersSchema = SchemaFactory.createForClass(Players)

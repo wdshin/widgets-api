@@ -28,6 +28,10 @@ const OVERLAYS_STATE = {
     active: 0,
     options: {},
   },
+  TEAM_STAT: {
+    active: 0,
+    options: {},
+  },
 }
 
 @WebSocketGateway({ cors: true })

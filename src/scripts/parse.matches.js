@@ -8,23 +8,35 @@ const {
   sleep,
 } = require('./shared')
 
+let position_store = new Map()
 const opendotaLeagueMatchesURL = (id) => `https://api.opendota.com/api/leagues/${id}/matches`
 const opendotaMatchById = (id) => `https://api.opendota.com/api/matches/${id}`
 
 async function main() {
     const params = process.argv.slice(2)
     if (params.length == 1) {
+        await get_player_positions()
         const league_id = params.pop()
-        const stats = await getParsedStatsForLeague(league_id)
-        console.log(stats)
+        await getParsedStatsForLeague(league_id)
     }
+}
+
+async function get_player_positions() {
+    const connection = await getDbConnection()
+    const db = getDb(connection)
+    const playersModel = getPlayersCollection(db)
+    const players = await playersModel.find({}).toArray()
+    players.forEach( (player) => {
+        position_store.set(player.account_id, player.position)
+    })
+    await connection.close()
 }
 
 async function getParsedStatsForLeague(league_id) {
     const league_matches_url = opendotaLeagueMatchesURL(league_id)
     const league_matches_json = await fetch(league_matches_url).then((data) => data.json())
     const league_match_ids = league_matches_json.map((match) => match.match_id)
-    
+   
     for (let i = 0; i < league_match_ids.length; ++i) {
         const match_id = league_match_ids[i]
         const match = await get_match_data(match_id)
@@ -41,25 +53,13 @@ async function get_match_data(id) {
     return match
 }
 
-function assign_team_and_position(players, isRadiant) {
-    return players.filter((player) => {
-        return player.isRadiant == isRadiant
-    }).sort((left, right) => {
-        return right.net_worth - left.net_worth
-    }).map((player, index) => {
-        player.position = index + 1
-        return player
-    })
-}
-
 function parse_match_stats(match) {
-    const players = match.players
-    const radiant_team = assign_team_and_position(players, true)
-    const dire_team = assign_team_and_position(players, false)
-
+    const radiant_team = assign_team_and_position(match, true)
+    const dire_team = assign_team_and_position(match, false)
+    
     const player_stats = new Map() 
     const hero_stats = new Map()
-    players.forEach((player) => {
+    match.players.forEach((player) => {
         const stats = make_player_stats(player, player.isRadiant ? dire_team : radiant_team)
         player_stats.set(player.account_id, stats)
         hero_stats.set(player.hero_id, stats)
@@ -69,6 +69,37 @@ function parse_match_stats(match) {
         players: player_stats,
         heroes: hero_stats
     }
+}
+
+function assign_team_and_position(match, isRadiant) { 
+    if (match_positions_are_in_db(match)) {
+        return match.players
+            .filter((player) => player.isRadiant == isRadiant)
+            .map((player) => {
+                player.position = position_store.get(player.account_id)
+                return player
+            })
+    } else {
+        return match.players
+            .filter((player) => player.isRadiant == isRadiant)
+            .sort((left, right) => right.net_worth - left.net_worth)
+            .map((player, index) => {
+                player.position = index + 1
+                return player
+            })
+    }
+}
+
+function match_positions_are_in_db(match) {
+    for (let i = 0; i < match.players.length; ++i) {
+        const player = match.players[i]
+        const position = position_store.get(player.account_id)
+        if (position == null) {
+            console.log(player.account_id, "Missing in db")
+            return false
+        }
+    }
+    return true
 }
 
 function make_player_stats(player, enemy_team) {

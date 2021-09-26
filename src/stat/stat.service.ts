@@ -53,23 +53,19 @@ export class StatService {
       player_real_name: player.real_name,
       player_earnings: player.prize,
       player_img: player.img,
+      player_country_code: player.country_code,
+      player_country_img: `https://www.worldometers.info/img/flags/${player.country_code}-flag.gif`,
       team_name: team.name,
       team_logo: team.logo_url,
       player_top_heroes: playerTopHeroes,
-      player_stat: [
-        {
-          field: ['Матчей в патче', 'Winrate'],
-          value: [patchWinLose.win + patchWinLose.lose, getWinrate(patchWinLose.win, patchWinLose.lose)],
-        },
-        {
-          field: ['Матчей за эту неделю', 'Winrate'],
-          value: [days7WinLose.win + days7WinLose.lose, getWinrate(days7WinLose.win, days7WinLose.lose)],
-        },
-        {
-          field: ['Матчей за сегодня', 'Winrate'],
-          value: [days1WinLose.win + days1WinLose.lose, getWinrate(days1WinLose.win, days1WinLose.lose)],
-        },
-      ],
+      player_stat: {
+        games_patch: patchWinLose.win + patchWinLose.lose,
+        games_week: days7WinLose.win + days7WinLose.lose,
+        games_today: days1WinLose.win + days1WinLose.lose,
+        winrate_patch: getWinrate(patchWinLose.win, patchWinLose.lose),
+        winrate_week: getWinrate(days7WinLose.win, days7WinLose.lose),
+        winrate_today: getWinrate(days1WinLose.win, days1WinLose.lose),
+      },
     }
   }
 

@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateDto } from 'src/common/dto/update.dto';
+import { Players } from 'src/players/players.schema';
+import { PlayersService } from 'src/players/players.service';
 import { Teams, TeamsDocument } from './teams.schema';
 
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectModel(Teams.name) private readonly teamsModel: Model<TeamsDocument>,
+    private readonly playersService: PlayersService,
     ) {}
 
   async getTeams(): Promise<Teams[]> {
@@ -18,6 +21,10 @@ export class TeamsService {
   async getTeamById(id: number): Promise<Teams> {
     const team = await this.teamsModel.findOne({ team_id: id });
     return team;
+  }
+
+  async getTeamPlayers(id: number): Promise<Players[]> {
+    return this.playersService.getPlayersByTeamId(id)
   }
 
   async createTeam(data: Teams): Promise<TeamsDocument> {

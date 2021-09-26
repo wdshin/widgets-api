@@ -21,6 +21,11 @@ export class PlayersService {
     return player;
   }
 
+  async getPlayersByTeamId(teamId: number): Promise<Players[]> {
+    const players = await this.playersModel.find({ team_id: teamId })
+    return players
+  }
+
   async updateOnePlayer(id: number, data): Promise<UpdateDto> {
     const res = await this.playersModel.updateOne({ id }, data);
 

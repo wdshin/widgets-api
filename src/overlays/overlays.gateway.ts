@@ -22,11 +22,19 @@ const OVERLAYS_STATE = {
   },
   BETTING_ODDS: {
     active: 0,
-    options: {}
-  }
+    options: {},
+  },
+  ROSHAN_TIMING: {
+    active: 0,
+    options: {},
+  },
+  TEAM_STAT: {
+    active: 0,
+    options: {},
+  },
 }
 
-@WebSocketGateway(5000, { cors: true })
+@WebSocketGateway({ cors: true })
 export class OverlaysGateway {
   @WebSocketServer()
   server: Server

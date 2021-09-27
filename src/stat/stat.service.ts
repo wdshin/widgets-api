@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { getWinrate } from 'src/common/dota.functions'
+import { getWinrate, getWinrateByMatchDuration } from 'src/common/dota.functions'
 import OpendotaService from 'src/common/OpendotaService'
 import { HeroesService } from 'src/heroes/heroes.service'
 import { PlayersService } from 'src/players/players.service'
@@ -70,10 +70,12 @@ export class StatService {
   public async getTeamsConfrontation(team1Id: number, team2Id: number): Promise<object> {
     const [
       team1Matches,
+      team2Matches,
       team1,
       team2,
     ] = await Promise.all([
       OpendotaService.getTeamMatches(team1Id),
+      OpendotaService.getTeamMatches(team2Id),
       this.teamsService.getTeamById(team1Id),
       this.teamsService.getTeamById(team2Id),
     ])
@@ -86,6 +88,9 @@ export class StatService {
     const winTotal = matchesAgainst.filter(match => match.radiant === match.radiant_win)
     const winLastYear = matchesAgainstLastYear.filter(match => match.radiant === match.radiant_win)
 
+    const winrateByDurationStat1 = getWinrateByMatchDuration(team1Matches)
+    const winrateByDurationStat2 = getWinrateByMatchDuration(team2Matches)
+
     return {
       team1_id: team1.team_id,
       team1_logo: team1.logo_url,
@@ -95,46 +100,16 @@ export class StatService {
       team2_name: team2.name,
       matches_against_total: matchesAgainst.length,
       matches_against_last_year: matchesAgainstLastYear.length,
-      team1_winrate_total: getWinrate(winTotal.length, matchesAgainst.length - winTotal.length),
-      team1_winrate_last_year: getWinrate(winLastYear.length, matchesAgainstLastYear.length - winLastYear.length),
-    }
-  }
-
-  public async getTeamWinrateMatchDuration(teamId: number): Promise<object> {
-    const [
-      teamMatches,
-      teamInfo,
-    ] = await Promise.all([
-      OpendotaService.getTeamMatches(teamId),
-      this.teamsService.getTeamById(teamId),
-    ])
-
-    const lastYear = new Date(Date.now() - 1000 * 60 * 60 * 24 * 365)
-    const _40min = 40 * 60, longer = [], shorter = []
-
-    for (let i = 0; i < teamMatches.length; ++i) {
-      const match = teamMatches[i]
-
-      if (new Date(match.start_time * 1000) < lastYear) continue
-
-      if (match.duration > _40min) {
-        longer.push(match)
-      } else {
-        shorter.push(match)
-      }
-    }
-
-    const winShorter = shorter.filter(match => match.radiant === match.radiant_win)
-    const winLonger = longer.filter(match => match.radiant === match.radiant_win)
-
-    return {
-      team_id: teamInfo.team_id,
-      team_logo: teamInfo.logo_url,
-      team_name: teamInfo.name,
-      games_longer: longer.length,
-      games_shorter: shorter.length,
-      winrate_longer: getWinrate(winLonger.length, longer.length - winLonger.length),
-      winrate_shorter: getWinrate(winShorter.length, shorter.length - winShorter.length)
+      team1_winrate_against_total: getWinrate(winTotal.length, matchesAgainst.length - winTotal.length),
+      team1_winrate_against_last_year: getWinrate(winLastYear.length, matchesAgainstLastYear.length - winLastYear.length),
+      team1_games_longer: winrateByDurationStat1.games_longer,
+      team1_games_shorter: winrateByDurationStat1.games_shorter,
+      team1_winrate_longer: winrateByDurationStat1.winrate_longer,
+      team1_winrate_shorter: winrateByDurationStat1.winrate_shorter,
+      team2_games_longer: winrateByDurationStat2.games_longer,
+      team2_games_shorter: winrateByDurationStat2.games_shorter,
+      team2_winrate_longer: winrateByDurationStat2.winrate_longer,
+      team2_winrate_shorter: winrateByDurationStat2.winrate_shorter,
     }
   }
 }

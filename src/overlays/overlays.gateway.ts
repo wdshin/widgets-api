@@ -12,10 +12,6 @@ const OVERLAYS_STATE = {
     active: 0,
     options: {}
   },
-  HERO_STAT: {
-    active: 0,
-    options: {}
-  },
   PLAYER_STAT: {
     active: 0,
     options: {}
@@ -31,6 +27,10 @@ const OVERLAYS_STATE = {
   TEAM_STAT: {
     active: 0,
     options: {},
+  },
+  TEAM_VS_TEAM_STAT: {
+    active: 0,
+    options: {}
   },
 }
 

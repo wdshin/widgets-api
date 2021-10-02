@@ -4,29 +4,49 @@ const fetch = require('node-fetch')
 const {
   getDbConnection,
   getPlayersCollection,
+  getMatchupsCollection,
   getDb,
   sleep,
 } = require('./shared')
 
 let position_store = new Map()
-const opendotaLeagueMatchesURL = (id) => `https://api.opendota.com/api/leagues/${id}/matches`
-const opendotaMatchById = (id) => `https://api.opendota.com/api/matches/${id}`
+const opendotaLeagueMatchesURL = (id) => `https://api.opendota.com/api/leagues/${id}/matches?api_key=447d4718-d5b1-4840-b5d7-e7fccfcf0570`
+const opendotaMatchById = (id) => `https://api.opendota.com/api/matches/${id}?api_key=447d4718-d5b1-4840-b5d7-e7fccfcf0570`
 
 async function main() {
     const params = process.argv.slice(2)
-    if (params.length == 1) {
-        const league_id = params.pop()
-        console.log(league_id)
-        await get_player_positions()
-        const stats = await getParsedStatsForLeague(league_id)
+
+    if (params.length !== 1) {
+        console.error('Provide league id (or list) as a parameter. Example: node parse-matches.js 1233312,321312,312312')
+        return
+    }
+
+    const connection = await getDbConnection()
+    const db = getDb(connection)
+    const matchupsModel = getMatchupsCollection(db)
+
+    const leaguesIds = params.pop().split(',')
+
+    await get_player_positions()
+
+    for (let l = 0; l < leaguesIds.length; ++l) {
+        const leagueId = leaguesIds[l]
+        const stats = await getParsedStatsForLeague(leagueId)
         
         try {
-            const data = fs.writeFileSync('matchups.json',JSON.stringify(stats, null, '\t'))
-            console.log("Written to a file")
+            console.log('Storing to db\n\n')
+
+            for (const stat of stats)
+            {
+                const id = `${stat.match_id}_${stat.player_id.me}_${stat.player_id.enemy}` 
+                await matchupsModel.updateOne({ id }, { $set: { id, ...stat } }, { upsert: true })
+            }
         } catch (err) {
             console.error(err)
         }
     }
+
+    connection.close()
 }
 
 async function get_player_positions() {
@@ -51,9 +71,12 @@ async function getParsedStatsForLeague(league_id) {
         const match = await get_match_data(match_id)
         const stats = parse_match_stats(match)
         all_stats.push(...stats)
-        console.log("Matches left: ", length - 1 - i)
-        await sleep(.5)
+        console.log(`[League: ${league_id}] Match ${i + 1} of ${length} done`)
+        await sleep(.01)
     }
+
+    console.log(`\nLeague ${league_id} is done\n`)
+
     return all_stats
 }
 
@@ -96,7 +119,6 @@ function match_positions_are_in_db(match) {
         const player = match.players[i]
         const position = position_store.get(player.account_id)
         if (position == null) {
-            console.log(player.account_id, "Missing in db")
             return false
         }
     }

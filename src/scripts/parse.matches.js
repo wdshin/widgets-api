@@ -1,5 +1,5 @@
 require('dotenv').config()
-
+const fs = require('fs');
 const fetch = require('node-fetch')
 const {
   getDbConnection,
@@ -15,9 +15,17 @@ const opendotaMatchById = (id) => `https://api.opendota.com/api/matches/${id}`
 async function main() {
     const params = process.argv.slice(2)
     if (params.length == 1) {
-        await get_player_positions()
         const league_id = params.pop()
-        await getParsedStatsForLeague(league_id)
+        console.log(league_id)
+        await get_player_positions()
+        const stats = await getParsedStatsForLeague(league_id)
+        
+        try {
+            const data = fs.writeFileSync('matchups.json',JSON.stringify(stats, null, '\t'))
+            console.log("Written to a file")
+        } catch (err) {
+            console.error(err)
+        }
     }
 }
 
@@ -36,15 +44,17 @@ async function getParsedStatsForLeague(league_id) {
     const league_matches_url = opendotaLeagueMatchesURL(league_id)
     const league_matches_json = await fetch(league_matches_url).then((data) => data.json())
     const league_match_ids = league_matches_json.map((match) => match.match_id)
-   
-    for (let i = 0; i < league_match_ids.length; ++i) {
+    const all_stats = new Array()
+    const length = league_match_ids.length
+    for (let i = 0; i < length; ++i) {
         const match_id = league_match_ids[i]
         const match = await get_match_data(match_id)
         const stats = parse_match_stats(match)
-        console.log(stats.heroes.keys())
-        console.log()
+        all_stats.push(...stats)
+        console.log("Matches left: ", length - 1 - i)
         await sleep(.5)
     }
+    return all_stats
 }
 
 async function get_match_data(id) {
@@ -56,19 +66,10 @@ async function get_match_data(id) {
 function parse_match_stats(match) {
     const radiant_team = assign_team_and_position(match, true)
     const dire_team = assign_team_and_position(match, false)
-    
-    const player_stats = new Map() 
-    const hero_stats = new Map()
-    match.players.forEach((player) => {
-        const stats = make_player_stats(player, player.isRadiant ? dire_team : radiant_team)
-        player_stats.set(player.account_id, stats)
-        hero_stats.set(player.hero_id, stats)
+    const stats = match.players.map((player) => {
+        return make_player_stats(player, player.isRadiant ? dire_team : radiant_team)
     })
-    
-    return {
-        players: player_stats,
-        heroes: hero_stats
-    }
+    return stats
 }
 
 function assign_team_and_position(match, isRadiant) { 
@@ -106,12 +107,11 @@ function make_player_stats(player, enemy_team) {
     const enemy = enemy_team[player.position - 1]
     return {
         player_id: make_stat_matchup(player, enemy, "account_id"),
-        win: make_stat_matchup(player, enemy, "win"),
-        lose: make_stat_matchup(player, enemy, "lose"),
+        match_id: player.match_id,
+        position: player.position,
+        win: player.win,
         hero: make_stat_matchup(player, enemy, "hero_id"),
-        position: make_stat_matchup(player, enemy, "position"),
         efficiency: make_stat_matchup(player, enemy, "lane_efficiency"),
-        match_id: make_stat_matchup(player, enemy, "match_id"),
         totals: {
             level: make_stat_matchup(player, enemy, "level"),
             gold: make_stat_matchup(player, enemy, "total_gold"),

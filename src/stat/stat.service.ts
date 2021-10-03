@@ -17,12 +17,13 @@ export class StatService {
     const player = await this.playersService.getPlayerById(playerId)
     let playerTopHeroes = []
 
-    const [team, patchWinLose, days7WinLose, days1WinLose, playerHeroes] = await Promise.all([
+    const [team, patchWinLose, days7WinLose, days1WinLose, playerHeroes, playerTotals] = await Promise.all([
       this.teamsService.getTeamById(player.team_id),
       OpendotaService.getWinLose(playerId, null, OpendotaService.CURRENT_PATCH),
       OpendotaService.getWinLose(playerId, 7),
       OpendotaService.getWinLose(playerId, 1),
       OpendotaService.getPlayerHeroes(playerId, null, OpendotaService.CURRENT_PATCH),
+      OpendotaService.getPlayerTotals(playerId),
     ])
 
     // sort and get top 3 heroes
@@ -31,7 +32,7 @@ export class StatService {
       playerHeroes.splice(3)
 
       playerTopHeroes = await Promise.all(
-        playerHeroes.map(async h => {
+        playerHeroes.filter(h => h.games > 0).map(async h => {
           const hero = await this.heroesService.getHeroById(Number(h.hero_id))
           return {
             hero_id: hero.id,
@@ -49,6 +50,10 @@ export class StatService {
       player_nickname: player.name,
       player_real_name: player.real_name,
       player_earnings: player.prize,
+      player_total_hours: Math.floor(playerTotals.duration / 3600), // in hours
+      player_total_wards: playerTotals.purchase_ward_observer + playerTotals.purchase_ward_sentry,
+      player_total_kills: playerTotals.kills,
+      player_position: player.position,
       player_img: player.img,
       player_country_code: player.country_code,
       player_country_img: `https://www.worldometers.info/img/flags/${player.country_code}-flag.gif`,

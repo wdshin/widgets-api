@@ -1,3 +1,4 @@
+import { Options } from '@nestjs/common'
 import fetch from 'node-fetch'
 import * as QueryString from 'qs'
 
@@ -9,9 +10,11 @@ export default class OpendotaService {
 
   private static endpoints = {
     players: () => '/players',
+    playerMatches: (id, options) => `/players/${id}/matches?${QueryString.stringify(options)}`,
     playersWinlose: (id, options) => `/players/${id}/wl?${QueryString.stringify(options)}`,
     playersHeroes: (id, options) => `/players/${id}/heroes?${QueryString.stringify(options)}`,
     teamMatches: (id) => `/teams/${id}/matches`,
+    match: (id) => `/matches/${id}`
   }
 
   constructor() {}
@@ -60,6 +63,26 @@ export default class OpendotaService {
     }
 
     return OpendotaService.get(OpendotaService.endpoints.playersHeroes(playerId, options))
+  }
+
+  public static getPlayerMatches = (player_id: number, days?, patch?): Promise<Array<any>> => {
+    const options : any = {
+      sort: true
+    }
+
+    if (days) {
+      options.date = days
+    }
+
+    if (patch) {
+      options.patch = patch
+    }
+    
+    return OpendotaService.get(OpendotaService.endpoints.playerMatches(player_id, options)) 
+  }
+
+  public static getMatch = (match_id: number) => {
+    return OpendotaService.get(OpendotaService.endpoints.match(match_id))
   }
 
   public static getTeamMatches = (teamId: number): Promise<Array<any>> => {

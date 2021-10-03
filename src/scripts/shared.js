@@ -15,6 +15,8 @@ const getHeroesCollection = db => db.collection('heroes')
 
 const getPlayersCollection = db => db.collection('players')
 
+const getMatchupsCollection = db => db.collection('matchups')
+
 const sleep = s => new Promise(res => setTimeout(res, s * 1000))
 
 module.exports = {
@@ -24,4 +26,5 @@ module.exports = {
   getTeamsCollection,
   getHeroesCollection,
   getPlayersCollection,
+  getMatchupsCollection,
 }

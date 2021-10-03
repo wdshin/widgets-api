@@ -38,13 +38,12 @@ export class StatService {
             hero_name: hero.localized_name,
             hero_img: hero.img,
             winrate: getWinrate(h.win, h.games - h.win),
-            games: h.games,
+            games: h.games
           }
         })
       )  
     }
 
-    
     return {
       player_id: player.account_id,
       player_nickname: player.name,

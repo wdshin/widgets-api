@@ -63,7 +63,15 @@ async function get_player_positions() {
 async function getParsedStatsForLeague(league_id) {
     const league_matches_url = opendotaLeagueMatchesURL(league_id)
     const league_matches_json = await fetch(league_matches_url).then((data) => data.json())
-    const league_match_ids = league_matches_json.map((match) => match.match_id)
+    const invited_team_ids = new Set([
+        7119388, 8254400, 15, 8214850, 350190, 1838315, 8260983, 6209166, 5, 7391077, 8204512, 2586976, 1883502, 8255756, 39, 7390454, 111474, 726228
+    ])
+    const league_match_ids = league_matches_json
+    .filter((match) => {
+        return (invited_team_ids.has(match.radiant_team_id) &&  invited_team_ids.has(match.dire_team_id)) ? 1 : 0
+    })
+    .map((match) => match.match_id)
+
     const all_stats = new Array()
     const length = league_match_ids.length
     for (let i = 0; i < length; ++i) {
@@ -90,7 +98,8 @@ function parse_match_stats(match) {
     const radiant_team = assign_team_and_position(match, true)
     const dire_team = assign_team_and_position(match, false)
     const stats = match.players.map((player) => {
-        return make_player_stats(player, player.isRadiant ? dire_team : radiant_team)
+        const team = player.isRadiant ? dire_team : radiant_team
+        return make_player_stats(match, player, team)
     })
     return stats
 }
@@ -125,9 +134,10 @@ function match_positions_are_in_db(match) {
     return true
 }
 
-function make_player_stats(player, enemy_team) {
+function make_player_stats(match, player, enemy_team) {
     const enemy = enemy_team[player.position - 1]
     return {
+        league_id: match.leagueid,
         player_id: make_stat_matchup(player, enemy, "account_id"),
         match_id: player.match_id,
         position: player.position,

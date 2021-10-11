@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { getWinrate, getWinrateByMatchDuration } from 'src/common/dota.functions'
 import OpendotaService from 'src/common/OpendotaService'
 import { HeroesService } from 'src/heroes/heroes.service'
+import { MatchesService } from 'src/matches/matches.service'
 import { PlayersService } from 'src/players/players.service'
 import { TeamsService } from 'src/teams/teams.service'
 
@@ -11,6 +12,7 @@ export class StatService {
     private readonly playersService: PlayersService,
     private readonly teamsService: TeamsService,
     private readonly heroesService: HeroesService,
+    private readonly matchesService: MatchesService,
   ) {}
 
   public async getOverlayPlayerInfo(playerId: number): Promise<object> {
@@ -114,6 +116,46 @@ export class StatService {
       team2_games_shorter: winrateByDurationStat2.games_shorter,
       team2_winrate_longer: winrateByDurationStat2.winrate_longer,
       team2_winrate_shorter: winrateByDurationStat2.winrate_shorter,
+    }
+  }
+
+  public async getHeroesStat(): Promise<any> {
+    const [matches] = await Promise.all([
+      this.matchesService.getMatches()
+    ])
+
+    const heroesStat = new Array(136).fill(0).map((h, id) => ({ picks: 0, bans: 0, id, win: 0 }))
+
+    for (const match of matches) {
+      const winSide = Number(!match.radiant_win) // 0 - radiant, 1 - dire
+
+      match.picks_bans.forEach(data => {
+        if (data.is_pick) {
+          heroesStat[data.hero_id].win += Number(data.team === winSide)
+        }
+
+        heroesStat[data.hero_id][data.is_pick ? 'picks' : 'bans'] += 1
+      })
+    }
+
+    heroesStat.sort((a, b) => b.picks + b.bans - a.picks - a.bans)
+    heroesStat.splice(5)
+
+    const heroes = await Promise.all(heroesStat.map(async hero => {
+      const heroInfo = await this.heroesService.getHeroById(hero.id)
+      return {
+        id: heroInfo.id,
+        name: heroInfo.localized_name,
+        img: heroInfo.img,
+        picks: hero.picks,
+        bans: hero.bans,
+        winrate: Math.round(getWinrate(hero.win, (hero.picks - hero.win)))
+      }
+    }))
+
+    return {
+      total_matches: matches.length,
+      heroes_stat: heroes,
     }
   }
 }

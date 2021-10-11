@@ -1,11 +1,13 @@
 import fetch from 'node-fetch'
 import * as QueryString from 'qs'
+import memoizer from './memoizer'
 
 export default class OpendotaService {
   private static API_URL : string = 'https://api.opendota.com/api'
   private static API_KEY : string = process.env.OPENDOTA_API_KEY
 
   public static CURRENT_PATCH : number = 49
+  public static TI10 : number = 13256
 
   private static endpoints = {
     players: () => '/players',
@@ -14,7 +16,8 @@ export default class OpendotaService {
     playerTotals: (id, options) => `/players/${id}/totals?${QueryString.stringify(options)}`,
     playerHeroes: (id, options) => `/players/${id}/heroes?${QueryString.stringify(options)}`,
     teamMatches: (id) => `/teams/${id}/matches`,
-    match: (id) => `/matches/${id}`
+    match: (id) => `/matches/${id}`,
+    leagueMatches: (id) => `/leagues/${id}/matches`,
   }
 
   constructor() {}
@@ -109,5 +112,10 @@ export default class OpendotaService {
 
   public static getTeamMatches = (teamId: number): Promise<Array<any>> => {
     return OpendotaService.get(OpendotaService.endpoints.teamMatches(teamId))
+  }
+
+  @memoizer
+  public static getLeagueMatches(id: number): Promise<Array<any>> {
+    return OpendotaService.get(OpendotaService.endpoints.leagueMatches(id))
   }
 }

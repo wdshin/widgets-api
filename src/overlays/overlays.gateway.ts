@@ -8,7 +8,7 @@ import { Server } from 'socket.io'
 
 // lol. yes, that simple. no need to make it more complex
 const OVERLAYS_STATE = {
-  DEFAULT: {
+  HEROES_STAT: {
     active: 0,
     options: {}
   },
@@ -17,10 +17,6 @@ const OVERLAYS_STATE = {
     options: {}
   },
   BETTING_ODDS: {
-    active: 0,
-    options: {},
-  },
-  ROSHAN_TIMING: {
     active: 0,
     options: {},
   },

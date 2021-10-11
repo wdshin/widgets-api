@@ -36,4 +36,15 @@ export class StatController {
    ): Promise<object> {
      return this.statService.getTeamsConfrontation(Number(team1Id), Number(team2Id))
    }
+
+   /**
+   * Get stat of heroes
+   * like most picked, winrate, most banned
+   * 
+   * @returns sorted info array
+   */
+    @Get('/overlay/heroes/top')
+    async getHeroesStat(): Promise<object> {
+      return this.statService.getHeroesStat()
+    }
 }

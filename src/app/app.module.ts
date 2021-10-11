@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
 import { HeroesModule } from 'src/heroes/heroes.module'
+import { MatchesModule } from 'src/matches/matches.module'
 import { OverlaysModule } from 'src/overlays/overlays.module'
 import { PlayersModule } from 'src/players/players.module'
 import { StatModule } from 'src/stat/stat.module'
@@ -16,6 +17,7 @@ import { AppController } from './app.controller'
     TeamsModule,
     HeroesModule,
     PlayersModule,
+    MatchesModule,
     StatModule,
   ],
   controllers: [AppController],

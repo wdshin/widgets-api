@@ -16,8 +16,18 @@ export class PaymentsService {
     }
 
     const clientSocket = this.socketService.getClientSocket(clientId)
+
+    if (!clientSocket) {
+      return {
+        ok: false,
+        message: 'Client is not online',
+      }
+    }
+
     clientSocket.emit('payment', message)
 
-    return message
+    return {
+      ok: true,
+    }
   }
 }
